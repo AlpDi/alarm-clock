@@ -1,10 +1,10 @@
-<!doctype html>
+<!DOCTYPE html>
 <head>
-    <link rel="stylesheet" href="styles.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
 <body>
-    <!-- <div>
+  <!-- <div>
         <label for="day-select">Choose a day:</label>
 
         <select name="days" id="day-select">
@@ -23,7 +23,7 @@
 
         <input type="time">
     </div> -->
-    <!-- <div>
+  <!-- <div>
         <script>
 
         function createAlarm(){
@@ -48,91 +48,95 @@
         </script>
     </div> -->
 
-    <div>
-
-        <script>
-
-            const testAlarm = [{id: 1, days: "Monday", time: "08:00", toggle: "on"}, {id: 1, days: "Monday, Tuesday", time: "12:15", toggle: "on"}, {id: 1, days: "Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday", time: "00:31", toggle: "on"}]
-            const Alarms = document.createElement("div");
-            Alarms.setAttribute("class", "Alarms")
-            document.body.appendChild(Alarms)
-            for(i in testAlarm){
-
-                const Alarm = document.createElement("div");
-                Alarm.setAttribute("class", "Alarm")
-                document.body.appendChild(Alarm)
-                let cur = testAlarm[i]
-
-                const timeDay = document.createElement("div");
-                timeDay.setAttribute("class", "time-day")
-                Alarm.appendChild(timeDay)
-
-                const time = document.createElement("span");
-                time.setAttribute("class", "time")
-                time.innerText = cur["time"]
-
-                const days = document.createElement("span");
-                days.setAttribute("class", "days")
-                days.innerText = cur["days"]
-
-                const toggle = document.createElement("input");
-                toggle.type = "checkbox"
-                toggle.setAttribute("class", "alarm-checkbox")
-
-                Alarms.appendChild(Alarm)
-                timeDay.appendChild(time)
-                timeDay.appendChild(days)
-                Alarm.appendChild(toggle)
-
-            }
-
-
-        </script>
-    </div>
-    <button class="modal-button" id="modal-button">+</button>
-    <div id="alarm-popup" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <form class="alarm-form" method="POST"> 
-                <div>
-                    <label for="imput-time">Choose Time: </label>
-                    <input name="time" id="input-time" type="time" value="12:00">
-                </div>
-                <div class="days-radio">
-                    <label><input type="radio" name="days" value="once">Once</label>
-                    <label><input type="radio" name="days" value="daily">Daily</label>
-                    <label><input type="radio" name="days" value="montofri">Mon To Fri</label>
-                </div>
-            </form>
-        </div>
-    </div>
-
+  <div>
     <script>
-        var modal = document.getElementById("alarm-popup");
+      const testAlarm = [
+        { id: 1, days: "Monday", time: "08:00", enabled: "on" },
+        { id: 1, days: "Monday, Tuesday", time: "12:15", enabled: "on" },
+        {
+          id: 1,
+          days: "Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday",
+          time: "00:31",
+          enabled: "on",
+        },
+      ];
+      const Alarms = document.createElement("div");
+      Alarms.setAttribute("class", "Alarms");
+      document.body.appendChild(Alarms);
+      for (i in testAlarm) {
+        const Alarm = document.createElement("div");
+        Alarm.setAttribute("class", "Alarm");
+        document.body.appendChild(Alarm);
+        let cur = testAlarm[i];
 
-        // Get the button that opens the modal
-        var btn = document.getElementById("modal-button");
+        const timeDay = document.createElement("div");
+        timeDay.setAttribute("class", "time-day");
+        Alarm.appendChild(timeDay);
 
-        // Get the <span> element that closes the modal
-        var span = document.getElementsByClassName("close")[0];
+        const time = document.createElement("span");
+        time.setAttribute("class", "time");
+        time.innerText = cur["time"];
 
-        // When the user clicks on the button, open the modal
-        btn.onclick = function() {
-            modal.style.display = "block";
-        }
+        const days = document.createElement("span");
+        days.setAttribute("class", "days");
+        days.innerText = cur["days"];
 
-        // When the user clicks on <span> (x), close the modal
-        span.onclick = function() {
-            modal.style.display = "none";
-        }
+        const toggle = document.createElement("input");
+        toggle.type = "checkbox";
+        toggle.setAttribute("class", "alarm-checkbox");
 
-        // When the user clicks anywhere outside of the modal, close it
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                modal.style.display = "none";
-            }
-        } 
+        Alarms.appendChild(Alarm);
+        timeDay.appendChild(time);
+        timeDay.appendChild(days);
+        Alarm.appendChild(toggle);
+      }
     </script>
+  </div>
+  <button class="modal-button" id="modal-button">+</button>
+  <div id="alarm-popup" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <form class="alarm-form" method="POST">
+        <div>
+          <label for="imput-time">Choose Time: </label>
+          <input name="time" id="input-time" type="time" value="12:00" />
+        </div>
+        <div class="days-radio">
+          <label><input type="radio" name="days" value="once" />Once</label>
+          <label><input type="radio" name="days" value="daily" />Daily</label>
+          <label
+            ><input type="radio" name="days" value="montofri" />Mon To
+            Fri</label
+          >
+        </div>
+      </form>
+    </div>
+  </div>
 
-    
+  <script>
+    var modal = document.getElementById("alarm-popup");
+
+    // Get the button that opens the modal
+    var btn = document.getElementById("modal-button");
+
+    // Get the <span> element that closes the modal
+    var span = document.getElementsByClassName("close")[0];
+
+    // When the user clicks on the button, open the modal
+    btn.onclick = function () {
+      modal.style.display = "block";
+    };
+
+    // When the user clicks on <span> (x), close the modal
+    span.onclick = function () {
+      modal.style.display = "none";
+    };
+
+    // When the user clicks anywhere outside of the modal, close it
+    window.onclick = function (event) {
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    };
+  </script>
 </body>
