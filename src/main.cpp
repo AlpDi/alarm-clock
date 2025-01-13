@@ -5,12 +5,22 @@
 #include <vector>
 #include <atomic>
 #include <ArduinoJson.h>
+#include <WebServer.h>
+#include <SPIFFS.h>
+#include <WiFi.h>
 
-#define SCREEN_WIDTH 128 // OLED display width, in pixels
-#define SCREEN_HEIGHT 64 // OLED display height, in pixels
 
-// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+#include "secrets.h"
+
+#define HOSTNAME "alarmclock"
+
+#define TIMEZONE "CET-1CEST,M3.5.0,M10.5.0/3"
+
+#define TRACE(...) Serial.printf(__VA_ARGS__)
+
+
+//----------Alarm Logic Setup--------------
+
 
 using std::string;
 using std::vector;
@@ -48,7 +58,7 @@ void addAlarm(uint8_t d, int h, int m, bool e){
   alarms.push_back(Alarm(d, h, m, e));
 }
 
-
+//Creates JsonDocument / JsonArray, jsonifies all Alarm Objects and stores them in alarmsArray, then returns the serialized jsonArray
 string getAlarmsAsJson(){
   JsonDocument doc;
   JsonArray alarmsArray = doc.to<JsonArray>();
@@ -63,10 +73,32 @@ string getAlarmsAsJson(){
   return output;
 }
 
+//-----------WebServer Setup----------------
+
+WebServer server(80);
+
+void handleGetAlarms(){
+  string json = getAlarmsAsJson();
+  server.send(200, "application/json", json.c_str());
+}
+
+
+
+//-----------Display Setup------------------
+/* #define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+
+// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1); */
+
+
 void setup() {
+  //wait for serial monitor
+  delay(3000);
+
   Serial.begin(115200);
 
-  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3D for 128x64
+/*   if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3D for 128x64
     Serial.println(F("SSD1306 allocation failed"));
     for(;;);
   }
@@ -80,9 +112,61 @@ void setup() {
   addAlarm(0b00000001, 12,30,true);
 
   display.println(getAlarmsAsJson().c_str());
-  display.display(); 
+  display.display();  */
+
+  //----------------initialize server------------
+  if(!SPIFFS.begin(true)){
+    Serial.println("error SPIFFS");
+     return;
+  }
+
+
+  WiFi.setHostname(HOSTNAME);
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, passPhrase);
+
+  while(WiFi.status() != WL_CONNECTED){
+    delay(500);
+    TRACE(".");
+  }
+
+  TRACE("connected.");
+  Serial.println(WiFi.localIP());
+
+  TRACE("Setup ntp...\n");
+  configTzTime(TIMEZONE, "pool.ntp.org");
+
+
+  server.on("/", [](){
+    File file = SPIFFS.open("/Page.html", "r");
+    if (!file){
+      server.send(400, "text/plain", "File not found");
+      return;
+    }
+    String html = file.readString();
+    server.send(200, "text/html", html);
+    file.close();
+  });
+
+  server.on("/styles.css", HTTP_GET, [](){
+    File file = SPIFFS.open("/styles.css", "r");
+    if (!file){
+      server.send(400, "text/plain", "File not found");
+      return;
+    }
+    String css = file.readString();
+    server.send(200, "text/css", css);
+  });
+
+  server.on("/alarms", HTTP_GET, handleGetAlarms);
+
+  server.enableCORS(true);
+
+  server.begin();
+
 }
 
 void loop() {
-  
+  server.handleClient();
 }
