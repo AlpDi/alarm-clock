@@ -40,6 +40,7 @@ class Alarm {
 
     // takes reference of json object and filled with data
     void toJSON(JsonObject& json){
+      json["id"] = id;
       json["days"] = days;
       json["hour"] = hour;
       json["minute"] = minute;
@@ -83,6 +84,18 @@ void handleGetAlarms(){
 }
 
 
+void handleAddAlarm(){
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  if (server.hasArg("plain")){
+    JsonDocument doc;
+    DeserializationError error = deserializeJson(doc, server.arg("plain"));
+
+    if(!error){
+      addAlarm(doc["days"], doc["hour"], doc["minutes"], doc["enabled"]);
+      server.send(200, "application/json", "{\"status\":\"success\"}");
+    }
+  }
+}
 
 //-----------Display Setup------------------
 /* #define SCREEN_WIDTH 128 // OLED display width, in pixels
@@ -119,6 +132,8 @@ void setup() {
     Serial.println("error SPIFFS");
      return;
   }
+
+  addAlarm(0b00000001, 12, 30, true);
 
 
   WiFi.setHostname(HOSTNAME);
@@ -158,10 +173,16 @@ void setup() {
     String css = file.readString();
     server.send(200, "text/css", css);
   });
+  server.on("/alarms", HTTP_OPTIONS, []() {
+    server.sendHeader("Access-Control-Allow-Origin", "*");
+    server.sendHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+    server.sendHeader("Access-Control-Allow-Headers", "Content-Type");
+    server.send(204); // Send success with no content
+});
 
   server.on("/alarms", HTTP_GET, handleGetAlarms);
 
-  server.enableCORS(true);
+  server.on("/alarms", HTTP_POST, handleAddAlarm);
 
   server.begin();
 

@@ -96,7 +96,6 @@
   <div id="alarm-popup" class="modal">
     <div class="modal-content">
       <span class="close">&times;</span>
-      <form class="alarm-form" method="POST">
         <div>
           <label for="imput-time">Choose Time: </label>
           <input name="time" id="input-time" type="time" value="12:00" />
@@ -109,11 +108,12 @@
             Fri</label
           >
         </div>
-      </form>
+        <Button id="alarmButton">Add Alarm</Button>
     </div>
   </div>
 
   <script>
+    //Modal Popup
     var modal = document.getElementById("alarm-popup");
 
     // Get the button that opens the modal
@@ -138,5 +138,58 @@
         modal.style.display = "none";
       }
     };
+    //split time into hour and minute
+    document.getElementById("alarmButton").addEventListener("click", function(event){
+      
+      const timeInput = document.getElementById("input-time").value
+      const daysInput = document.querySelector('input[name="days"]:checked');
+
+
+      const [hour, minute] = timeInput.split(":").map(Number)
+      console.log(hour, minute)
+
+      if(daysInput === "daily"){
+        var days = 127
+      }else if(daysInput === "montofri"){
+        var days = 31
+      }else {
+        var days = 0
+      }
+
+      const formData = {
+        hour: hour,
+        minute: minute,
+        days: days,
+      }
+
+      fetch("http://alarmclock/alarms", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(formData)  // Send the form data as JSON
+        })
+        .then(response => response.json())
+        .then(data => console.log("Server response:", data))
+        .catch(error => console.error("Error sending data:", error));
+    })
+
+
+
+    async function getAlarms(){
+      const url = "http://alarmclock/alarms";
+      try{
+        const response = await fetch(url);
+        if (!response.ok){
+          throw new Error(`Response status: ${response.status}`);
+        }
+
+      const json = await response.json();
+      console.log(json);
+      }catch(error){
+        console.error(error.message);
+      }
+    }
+    window.addEventListener("DOMContentLoaded", getAlarms);
   </script>
 </body>
