@@ -57,6 +57,7 @@ vector<Alarm> alarms;
 
 void addAlarm(uint8_t d, int h, int m, bool e){
   alarms.push_back(Alarm(d, h, m, e));
+  TRACE("%u,%d,%d,%i",d,h,m,e);
 }
 
 //Creates JsonDocument / JsonArray, jsonifies all Alarm Objects and stores them in alarmsArray, then returns the serialized jsonArray
@@ -81,17 +82,19 @@ WebServer server(80);
 void handleGetAlarms(){
   string json = getAlarmsAsJson();
   server.send(200, "application/json", json.c_str());
+  TRACE(json.c_str());
 }
 
 
 void handleAddAlarm(){
   server.sendHeader("Access-Control-Allow-Origin", "*");
+  
   if (server.hasArg("plain")){
     JsonDocument doc;
     DeserializationError error = deserializeJson(doc, server.arg("plain"));
 
     if(!error){
-      addAlarm(doc["days"], doc["hour"], doc["minutes"], doc["enabled"]);
+      addAlarm(doc["days"], doc["hour"], doc["minute"], doc["enabled"]);
       server.send(200, "application/json", "{\"status\":\"success\"}");
     }
   }
@@ -134,6 +137,9 @@ void setup() {
   }
 
   addAlarm(0b00000001, 12, 30, true);
+  addAlarm(0b00110001, 13, 40, true);
+  addAlarm(0b10101010, 14, 50, true);
+  addAlarm(0b11111111, 15, 0, true);
 
 
   WiFi.setHostname(HOSTNAME);

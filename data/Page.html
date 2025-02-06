@@ -50,46 +50,73 @@
 
   <div>
     <script>
-      const testAlarm = [
-        { id: 1, days: "Monday", time: "08:00", enabled: "on" },
-        { id: 1, days: "Monday, Tuesday", time: "12:15", enabled: "on" },
-        {
-          id: 1,
-          days: "Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday",
-          time: "00:31",
-          enabled: "on",
-        },
-      ];
-      const Alarms = document.createElement("div");
-      Alarms.setAttribute("class", "Alarms");
-      document.body.appendChild(Alarms);
-      for (i in testAlarm) {
-        const Alarm = document.createElement("div");
-        Alarm.setAttribute("class", "Alarm");
-        document.body.appendChild(Alarm);
-        let cur = testAlarm[i];
 
-        const timeDay = document.createElement("div");
-        timeDay.setAttribute("class", "time-day");
-        Alarm.appendChild(timeDay);
+      //0 = Sunday, 1 = Monday,...,6 = Saturday
+      //1 << day sets mask where only the bit corresponding to the day is set
+      //days & (1 << day) performs bitwise and where result is non-zero if day bit is set in days mask
+      function decodeBitmask(days){
+        const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+        let activeDays = []
 
-        const time = document.createElement("span");
-        time.setAttribute("class", "time");
-        time.innerText = cur["time"];
-
-        const days = document.createElement("span");
-        days.setAttribute("class", "days");
-        days.innerText = cur["days"];
-
-        const toggle = document.createElement("input");
-        toggle.type = "checkbox";
-        toggle.setAttribute("class", "alarm-checkbox");
-
-        Alarms.appendChild(Alarm);
-        timeDay.appendChild(time);
-        timeDay.appendChild(days);
-        Alarm.appendChild(toggle);
+        for(let i = 0; i < 7; i++){
+          if(days & (1 << i)){
+            activeDays.push(daysOfWeek[i])
+          }
+        }
+        return activeDays
       }
+
+      async function getAlarms(){
+      const url = "http://alarmclock/alarms";
+      try{
+        const response = await fetch(url);
+        if (!response.ok){
+          throw new Error(`Response status: ${response.status}`);
+        }
+
+      const json = await response.json();
+      return json;
+      console.log(json);
+      }catch(error){
+        console.error(error.message);
+        return null;
+      }
+    }
+
+      async function displayAlarms(){
+        const alarms = await getAlarms();
+        const Alarms = document.createElement("div");
+        Alarms.setAttribute("class", "Alarms");
+        document.body.appendChild(Alarms);
+        for (i in alarms) {
+          const Alarm = document.createElement("div");
+          Alarm.setAttribute("class", "Alarm");
+          document.body.appendChild(Alarm);
+          let cur = alarms[i];
+
+          const timeDay = document.createElement("div");
+          timeDay.setAttribute("class", "time-day");
+          Alarm.appendChild(timeDay);
+
+          const time = document.createElement("span");
+          time.setAttribute("class", "time");
+          time.innerText = `${cur["hour"]}:${String(cur["minute"]).padStart(2, '0')}`;
+
+          const days = document.createElement("span");
+          days.setAttribute("class", "days");
+          days.innerText = decodeBitmask(cur["days"]).join(", ")
+
+          const toggle = document.createElement("input");
+          toggle.type = "checkbox";
+          toggle.setAttribute("class", "alarm-checkbox");
+
+          Alarms.appendChild(Alarm);
+          timeDay.appendChild(time);
+          timeDay.appendChild(days);
+          Alarm.appendChild(toggle);
+        }
+      }
+      displayAlarms()
     </script>
   </div>
   <button class="modal-button" id="modal-button">+</button>
@@ -176,20 +203,6 @@
 
 
 
-    async function getAlarms(){
-      const url = "http://alarmclock/alarms";
-      try{
-        const response = await fetch(url);
-        if (!response.ok){
-          throw new Error(`Response status: ${response.status}`);
-        }
-
-      const json = await response.json();
-      console.log(json);
-      }catch(error){
-        console.error(error.message);
-      }
-    }
-    window.addEventListener("DOMContentLoaded", getAlarms);
+    
   </script>
 </body>
