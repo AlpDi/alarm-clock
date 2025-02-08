@@ -14,7 +14,7 @@
 
 #define HOSTNAME "alarmclock"
 
-#define TIMEZONE "CET-1CEST,M3.5.0,M10.5.0/3"
+#define TIMEZONE "CET-1CEST,M3.5.0,M10.5.0/3" //Berlin timezone
 
 #define TRACE(...) Serial.printf(__VA_ARGS__)
 
@@ -147,7 +147,13 @@ void handleGetAlarms(){
   TRACE(json.c_str());
 }
 
-
+void handleOptions() {
+  // Handle preflight OPTIONS request for CORS
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  server.sendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  server.sendHeader("Access-Control-Allow-Headers", "Content-Type");
+  server.send(204);  // No content response
+}
 void handleAddAlarm(){
   server.sendHeader("Access-Control-Allow-Origin", "*");
   
@@ -161,6 +167,8 @@ void handleAddAlarm(){
     }
   }
 }
+
+
 
 //-----------Display Setup------------------
 /* #define SCREEN_WIDTH 128 // OLED display width, in pixels
@@ -227,10 +235,17 @@ void setup() {
       server.send(400, "text/plain", "File not found");
       return;
     }
+    server.sendHeader("Access-Control-Allow-Origin", "*");  // Allow all origins
+    server.sendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    server.sendHeader("Access-Control-Allow-Headers", "Content-Type");
+
+
     String html = file.readString();
     server.send(200, "text/html", html);
     file.close();
   });
+
+  server.on("/", HTTP_OPTIONS, handleOptions);
 
   server.on("/styles.css", HTTP_GET, [](){
     File file = SPIFFS.open("/styles.css", "r");
@@ -241,7 +256,8 @@ void setup() {
     String css = file.readString();
     server.send(200, "text/css", css);
   });
-  server.on("/alarms", HTTP_OPTIONS, []() {
+
+    server.on("/alarms", HTTP_OPTIONS, []() {
     server.sendHeader("Access-Control-Allow-Origin", "*");
     server.sendHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
     server.sendHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -250,7 +266,9 @@ void setup() {
 
   server.on("/alarms", HTTP_GET, handleGetAlarms);
 
-  server.on("/alarms", HTTP_POST, handleAddAlarm);
+    server.on("/alarms", HTTP_POST, handleAddAlarm);
+
+  server.enableCORS(true);
 
   server.begin();
 
