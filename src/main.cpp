@@ -50,6 +50,14 @@ class Alarm {
   protected:
     static std::atomic<int> s_id;
 
+    static void setIdCounter(int value){
+      s_id = value;
+    }
+    
+    static int getIdCounter(){
+      return s_id;
+    }
+
 };
 std::atomic<int> Alarm::s_id;
 
@@ -73,6 +81,60 @@ string getAlarmsAsJson(){
   string output;
   serializeJson(doc, output);
   return output;
+}
+
+//-----------Pull Push Modify alarms on Spiff--------------------
+
+
+void saveAlarmsToSpiffs(){
+  StaticJsonDocument<1024> doc;
+  JsonArray array = doc.to<JsonArray>();
+
+  for(Alarm &alarm : alarms){
+    JsonObject obj = array.createNestedObject();
+    alarm.toJSON(obj);
+  }
+
+  File file = SPIFFS.open("/alarms.json", "w");
+  if(!file){
+    TRACE("failed to open file for writing");
+    return;
+  }
+
+  serializeJson(doc, file);
+  file.close();
+  TRACE("Alarm saved to SPIFFS");
+}
+
+
+void loadAlarmsFromSpiffs(){
+  if(SPIFFS.exists("/alarms.json")){
+    TRACE("No Alarms found");
+    return;
+  }
+
+  File file = SPIFFS.open("/alarms.json", "r");
+  if(!file){
+    TRACE("Failed to open file for reading");
+    return;
+  }
+  StaticJsonDocument<1024> doc;
+  DeserializationError error = deserializeJson(doc, file);
+  if(error){
+    TRACE("failed to parse json");
+    file.close();
+    return;
+  }
+
+  alarms.clear();
+
+  for (JsonObject obj : doc.as<JsonArray>()){
+    addAlarm(obj["days"], obj["hour"], obj["minute"], obj["enabled"]);
+  }
+
+  file.close();
+
+  return;
 }
 
 //-----------WebServer Setup----------------
@@ -197,3 +259,5 @@ void setup() {
 void loop() {
   server.handleClient();
 }
+
+//todo alarm logic

@@ -4,205 +4,151 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
 <body>
-  <!-- <div>
-        <label for="day-select">Choose a day:</label>
-
-        <select name="days" id="day-select">
-        </select>
-        
-        <script>
-            const Days =  ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-            select = document.getElementById('day-select')
-            for (day in Days){
-                var opt = document.createElement('option')
-                opt.value = Days[day]
-                opt.innerHTML = Days[day]
-                select.appendChild(opt)
-            }
-        </script>
-
-        <input type="time">
-    </div> -->
-  <!-- <div>
-        <script>
-
-        function createAlarm(){
-            const DaysWeek =  ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-
-            var select = document.createElement('select')
-            var label = document.createElement('label')
-            label.innerHTML = "Choose a day: "
-            select.setAttribute('id', 'mySelect')
-            document.body.appendChild(label)
-            document.body.appendChild(select)
-            label.setAttribute('for', 'mySelect')
-            
-            for (i in DaysWeek){
-                var opt = document.createElement('option')
-                opt.value = DaysWeek[i]
-                opt.innerHTML = DaysWeek[i]
-                select.appendChild(opt)
-            }
-        }
-
-        </script>
-    </div> -->
-
-  <div>
-    <script>
-
-      //0 = Sunday, 1 = Monday,...,6 = Saturday
-      //1 << day sets mask where only the bit corresponding to the day is set
-      //days & (1 << day) performs bitwise and where result is non-zero if day bit is set in days mask
-      function decodeBitmask(days){
-        const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-        let activeDays = []
-
-        for(let i = 0; i < 7; i++){
-          if(days & (1 << i)){
-            activeDays.push(daysOfWeek[i])
-          }
-        }
-        return activeDays
-      }
-
-      async function getAlarms(){
-      const url = "http://alarmclock/alarms";
-      try{
-        const response = await fetch(url);
-        if (!response.ok){
-          throw new Error(`Response status: ${response.status}`);
-        }
-
-      const json = await response.json();
-      return json;
-      console.log(json);
-      }catch(error){
-        console.error(error.message);
-        return null;
-      }
-    }
-
-      async function displayAlarms(){
-        const alarms = await getAlarms();
-        const Alarms = document.createElement("div");
-        Alarms.setAttribute("class", "Alarms");
-        document.body.appendChild(Alarms);
-        for (i in alarms) {
-          const Alarm = document.createElement("div");
-          Alarm.setAttribute("class", "Alarm");
-          document.body.appendChild(Alarm);
-          let cur = alarms[i];
-
-          const timeDay = document.createElement("div");
-          timeDay.setAttribute("class", "time-day");
-          Alarm.appendChild(timeDay);
-
-          const time = document.createElement("span");
-          time.setAttribute("class", "time");
-          time.innerText = `${cur["hour"]}:${String(cur["minute"]).padStart(2, '0')}`;
-
-          const days = document.createElement("span");
-          days.setAttribute("class", "days");
-          days.innerText = decodeBitmask(cur["days"]).join(", ")
-
-          const toggle = document.createElement("input");
-          toggle.type = "checkbox";
-          toggle.setAttribute("class", "alarm-checkbox");
-
-          Alarms.appendChild(Alarm);
-          timeDay.appendChild(time);
-          timeDay.appendChild(days);
-          Alarm.appendChild(toggle);
-        }
-      }
-      displayAlarms()
-    </script>
-  </div>
+  <div id="alarms-container"></div>
   <button class="modal-button" id="modal-button">+</button>
+  
   <div id="alarm-popup" class="modal">
     <div class="modal-content">
       <span class="close">&times;</span>
-        <div>
-          <label for="imput-time">Choose Time: </label>
-          <input name="time" id="input-time" type="time" value="12:00" />
-        </div>
-        <div class="days-radio">
-          <label><input type="radio" name="days" value="once" />Once</label>
-          <label><input type="radio" name="days" value="daily" />Daily</label>
-          <label
-            ><input type="radio" name="days" value="montofri" />Mon To
-            Fri</label
-          >
-        </div>
-        <Button id="alarmButton">Add Alarm</Button>
+      <div>
+        <label for="input-time">Choose Time: </label>
+        <input name="time" id="input-time" type="time" value="12:00" />
+      </div>
+      <div class="days-radio">
+        <label><input type="radio" name="days" value="once" checked />Once</label>
+        <label><input type="radio" name="days" value="daily" />Daily</label>
+        <label><input type="radio" name="days" value="montofri" />Mon To Fri</label>
+      </div>
+      <Button id="alarmButton">Add Alarm</Button>
     </div>
   </div>
 
   <script>
-    //Modal Popup
-    var modal = document.getElementById("alarm-popup");
-
-    // Get the button that opens the modal
-    var btn = document.getElementById("modal-button");
-
-    // Get the <span> element that closes the modal
-    var span = document.getElementsByClassName("close")[0];
-
-    // When the user clicks on the button, open the modal
-    btn.onclick = function () {
-      modal.style.display = "block";
+    const API_URL = 'http://alarmclock/alarms';
+    const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    
+    // Utility functions
+    const decodeBitmask = (days) => {
+      return DAYS_OF_WEEK.filter((_, index) => days & (1 << index));
     };
 
-    // When the user clicks on <span> (x), close the modal
-    span.onclick = function () {
-      modal.style.display = "none";
+    const getDaysBitmask = (selection) => {
+      const bitmasks = {
+        'daily': 127,    // All days (1111111)
+        'montofri': 62,  // Monday to Friday (0111110)
+        'once': 128      // One-time alarm
+      };
+      return bitmasks[selection] || 128;
     };
 
-    // When the user clicks anywhere outside of the modal, close it
-    window.onclick = function (event) {
-      if (event.target == modal) {
-        modal.style.display = "none";
+    // API functions
+    const fetchAlarms = async () => {
+      try {
+        const response = await fetch(API_URL);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+      } catch (error) {
+        console.error('Error fetching alarms:', error);
+        return [];
       }
     };
-    //split time into hour and minute
-    document.getElementById("alarmButton").addEventListener("click", function(event){
+
+    const createAlarm = async (formData) => {
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+      } catch (error) {
+        console.error('Error creating alarm:', error);
+        return null;
+      }
+    };
+
+    // UI functions
+    const createAlarmElement = (alarm) => {
+      const alarmDiv = document.createElement('div');
+      alarmDiv.className = 'Alarm';
       
-      const timeInput = document.getElementById("input-time").value
-      const daysInput = document.querySelector('input[name="days"]:checked');
+      const timeDayDiv = document.createElement('div');
+      timeDayDiv.className = 'time-day';
+      
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'time';
+      timeSpan.textContent = `${alarm.hour}:${String(alarm.minute).padStart(2, '0')}`;
+      
+      const daysSpan = document.createElement('span');
+      daysSpan.className = 'days';
+      daysSpan.textContent = decodeBitmask(alarm.days).join(', ');
+      
+      const toggle = document.createElement('input');
+      toggle.type = 'checkbox';
+      toggle.className = 'alarm-checkbox';
+      toggle.checked = alarm.enabled || false;
+      
+      timeDayDiv.append(timeSpan, daysSpan);
+      alarmDiv.append(timeDayDiv, toggle);
+      
+      return alarmDiv;
+    };
 
+    const displayAlarms = async () => {
+      const alarms = await fetchAlarms();
+      const alarmsContainer = document.getElementById('alarms-container');
+      const alarmsWrapper = document.createElement('div');
+      alarmsWrapper.className = 'Alarms';
+      
+      alarmsContainer.innerHTML = ''; // Clear existing alarms
+      alarmsWrapper.append(...alarms.map(createAlarmElement));
+      alarmsContainer.appendChild(alarmsWrapper);
+    };
+    //TODO handle deletes
 
-      const [hour, minute] = timeInput.split(":").map(Number)
-      console.log(hour, minute)
+    // Modal handling
+    const modal = document.getElementById('alarm-popup');
+    const modalBtn = document.getElementById('modal-button');
+    const closeBtn = document.getElementsByClassName('close')[0];
 
-      if(daysInput === "daily"){
-        var days = 127
-      }else if(daysInput === "montofri"){
-        var days = 62
-      }else {
-        var days = 128
-      }
+    const closeModal = () => {
+      modal.style.display = 'none';
+    };
+
+    modalBtn.onclick = () => modal.style.display = 'block';
+    closeBtn.onclick = closeModal;
+    window.onclick = (event) => {
+      if (event.target === modal) closeModal();
+    };
+
+    // Form handling
+    document.getElementById('alarmButton').addEventListener('click', async () => {
+      const timeInput = document.getElementById('input-time').value;
+      const daysInput = document.querySelector('input[name="days"]:checked').value;
+      const [hour, minute] = timeInput.split(':').map(Number);
 
       const formData = {
-        hour: hour,
-        minute: minute,
-        days: days,
+        hour,
+        minute,
+        days: getDaysBitmask(daysInput),
+        enabled: true
+      };
+
+      const result = await createAlarm(formData);
+      if (result) {
+        await displayAlarms(); // Refresh the alarms list
+        closeModal();
       }
+    });
 
-      fetch("http://alarmclock/alarms", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(formData)  // Send the form data as JSON
-        })
-        .then(response => response.json())
-        .then(data => console.log("Server response:", data))
-        .catch(error => console.error("Error sending data:", error));
-    })
-
-
-
-    
+    // Initial load
+    displayAlarms();
   </script>
 </body>
