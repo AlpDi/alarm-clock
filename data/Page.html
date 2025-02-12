@@ -7,7 +7,7 @@
   <div id="alarms-container"></div>
   <div class="floating-buttons" id="floating-buttons">
     <button class="modal-button" id="modal-button">+</button>
-    <button class="delete-button" id="delete-button">del</button>
+    <button class="edit-button" id="edit-button">edit</button>
   </div>
 
   <div id="alarm-popup" class="modal">
@@ -94,6 +94,8 @@
       const alarmDiv = document.createElement("div");
       alarmDiv.className = "Alarm";
 
+      alarmDiv.dataset.alarmId = alarm.id;
+
       const timeDayDiv = document.createElement("div");
       timeDayDiv.className = "time-day";
 
@@ -113,8 +115,14 @@
       toggle.className = "alarm-checkbox";
       toggle.checked = alarm.enabled || false;
 
+      const deleteToggle = document.createElement("input");
+      deleteToggle.type = "checkbox";
+      deleteToggle.className = "delete-checkbox";
+      deleteToggle.checked = false;
+
       timeDayDiv.append(timeSpan, daysSpan);
-      alarmDiv.append(timeDayDiv, toggle);
+      alarmDiv.append(timeDayDiv, toggle, deleteToggle);
+
 
       return alarmDiv;
     };
@@ -129,7 +137,37 @@
       alarmsWrapper.append(...alarms.map(createAlarmElement));
       alarmsContainer.appendChild(alarmsWrapper);
     };
-    //TODO handle deletes
+    //TODO handle edits
+
+
+    const editBtn = document.getElementById("edit-button");
+
+
+    const floatingButtons = document.getElementById("floating-buttons");
+
+    const deleteBtn = document.createElement("button")
+    deleteBtn.className = "delete-button";
+    deleteBtn.innerHTML = "del";
+    deleteBtn.style.display = "none";
+    floatingButtons.insertBefore(deleteBtn, editBtn);
+
+    editBtn.onclick = () => {
+      deleteBtn.style.display = deleteBtn.style.display === "none" ? "Block" : "none";
+      document.querySelectorAll(".alarm-checkbox").forEach((el) => {el.style.display = el.style.display === "none" ? "block" : "none"})
+      document.querySelectorAll(".delete-checkbox").forEach((el) => {
+        el.style.display = el.style.display === "block" ? "none": "block"; 
+        el.checked = false
+      })
+    }
+
+    deleteBtn.onclick = () => {
+      const selectedIds = new Set();
+
+      document.querySelectorAll(".delete-checkbox:checked").forEach((el) => {
+        selectedIds.add(el.parentElement.dataset.alarmId)
+      })
+      console.log(selectedIds)
+    }
 
     // Modal handling
     const modal = document.getElementById("alarm-popup");

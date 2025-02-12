@@ -99,13 +99,13 @@ body {
   cursor: pointer;
 }
 
-.delete-button {
+.edit-button {
   background-color: rgb(46, 46, 46);
   color: rgb(170, 170, 170);
   margin: 0px;
   border: none;
   border-radius: 15px;
-  font-size: 24px;
+  font-size: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -114,6 +114,42 @@ body {
   text-align: center;
   cursor: pointer;
 }
+
+.delete-button {
+  background-color: rgb(46, 46, 46);
+  color: rgb(170, 170, 170);
+  margin: 0px;
+  border: none;
+  border-radius: 15px;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.delete-checkbox {
+  display: none;
+  width: 1.3em;
+  height: 1.3em;
+  background-color: white;
+  border-radius: 50%;
+  vertical-align: middle;
+  border: 1px solid #ddd;
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+  cursor: pointer;
+}
+
+.delete-checkbox:checked {
+  background-color: #c02020; /* Change to green when checked */
+  border-color: #c02020;
+}
+
 
 .modal-button:hover {
   background-color: rgb(30, 30, 30);

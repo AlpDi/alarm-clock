@@ -87,7 +87,7 @@ string getAlarmsAsJson(){
 
 
 void saveAlarmsToSpiffs(){
-  StaticJsonDocument<1024> doc;
+  JsonDocument doc;
   JsonArray array = doc.to<JsonArray>();
 
   for(Alarm &alarm : alarms){
@@ -118,7 +118,7 @@ void loadAlarmsFromSpiffs(){
     TRACE("Failed to open file for reading");
     return;
   }
-  StaticJsonDocument<1024> doc;
+  JsonDocument doc;
   DeserializationError error = deserializeJson(doc, file);
   if(error){
     TRACE("failed to parse json");
@@ -165,6 +165,30 @@ void handleAddAlarm(){
       addAlarm(doc["days"], doc["hour"], doc["minute"], doc["enabled"]);
       server.send(200, "application/json", "{\"status\":\"success\"}");
     }
+  }
+}
+
+void handleDeleteAlarm(){
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+
+  if(server.hasArg("plain")){
+    JsonDocument doc;
+    DeserializationError error = deserializeJson(doc, server.arg("plain"));
+
+    if(!error){
+      JsonArray idsArray = doc["ids"];
+
+      for(int id: idsArray){
+        auto it = std::find_if(alarms.begin(), alarms.end(), [id](const Alarm &obj){
+          return obj.id == id;
+        });
+        alarms.erase(it);
+      }
+
+    }
+
+
+
   }
 }
 
