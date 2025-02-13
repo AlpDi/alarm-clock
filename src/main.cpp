@@ -38,7 +38,7 @@ class Alarm {
       : days(d), hour(h), minute(m), enabled(e), id(++s_id){}
 
 
-    // takes reference of json object and filled with data
+
     void toJSON(JsonObject& json){
       json["id"] = id;
       json["days"] = days;
@@ -108,7 +108,7 @@ void saveAlarmsToSpiffs(){
 
 
 void loadAlarmsFromSpiffs(){
-  if(SPIFFS.exists("/alarms.json")){
+  if(!SPIFFS.exists("/alarms.json")){
     TRACE("No Alarms found");
     return;
   }
@@ -141,21 +141,25 @@ void loadAlarmsFromSpiffs(){
 
 WebServer server(80);
 
+void setCorsHeaders() {
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  server.sendHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+  server.sendHeader("Access-Control-Allow-Headers", "Content-Type");
+}
+
+
 void handleGetAlarms(){
+  setCorsHeaders();
   string json = getAlarmsAsJson();
   server.send(200, "application/json", json.c_str());
-  TRACE(json.c_str());
 }
 
 void handleOptions() {
-  // Handle preflight OPTIONS request for CORS
-  server.sendHeader("Access-Control-Allow-Origin", "*");
-  server.sendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  server.sendHeader("Access-Control-Allow-Headers", "Content-Type");
-  server.send(204);  // No content response
+  setCorsHeaders();
+  server.send(204);
 }
 void handleAddAlarm(){
-  server.sendHeader("Access-Control-Allow-Origin", "*");
+  setCorsHeaders();
   
   if (server.hasArg("plain")){
     JsonDocument doc;
@@ -166,31 +170,67 @@ void handleAddAlarm(){
       server.send(200, "application/json", "{\"status\":\"success\"}");
     }
   }
+  saveAlarmsToSpiffs();
 }
 
-void handleDeleteAlarm(){
-  server.sendHeader("Access-Control-Allow-Origin", "*");
+void handleDeleteAlarm() {
+  setCorsHeaders();
+  
+  TRACE("Delete alarm request received\n");
 
-  if(server.hasArg("plain")){
-    JsonDocument doc;
-    DeserializationError error = deserializeJson(doc, server.arg("plain"));
-
-    if(!error){
-      JsonArray idsArray = doc["ids"];
-
-      for(int id: idsArray){
-        auto it = std::find_if(alarms.begin(), alarms.end(), [id](const Alarm &obj){
-          return obj.id == id;
-        });
-        alarms.erase(it);
-      }
-
-    }
-
-
-
+  if(server.method() == HTTP_OPTIONS) {
+    server.send(204);
+    return;
   }
+
+  if(!server.hasArg("plain")) {
+    TRACE("No plain argument found\n");
+    server.send(400, "application/json", "{\"status\":\"error\",\"message\":\"No data received\"}");
+    return;
+  }
+
+  String data = server.arg("plain");
+  TRACE("Received data: %s\n", data.c_str()); 
+
+  JsonDocument doc;
+  DeserializationError error = deserializeJson(doc, data);
+
+  if(error) {
+    TRACE("JSON parsing failed: %s\n", error.c_str()); 
+    server.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Invalid JSON\"}");
+    return;
+  }
+
+  if(!doc.containsKey("ids")) {
+    TRACE("No ids field in JSON\n"); 
+    server.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Missing ids field\"}");
+    return;
+  }
+
+  JsonArray idsArray = doc["ids"];
+  if(idsArray.size() == 0) {
+    TRACE("Empty ids array\n"); 
+    server.send(400, "application/json", "{\"status\":\"error\",\"message\":\"No ids provided\"}");
+    return;
+  }
+
+  for(JsonVariant id : idsArray) {
+    TRACE("Processing id: %d\n", id.as<int>()); 
+    auto it = std::find_if(alarms.begin(), alarms.end(), 
+      [id](const Alarm &obj) { return obj.id == id.as<int>(); });
+    
+    if(it != alarms.end()) {
+      alarms.erase(it);
+      TRACE("Alarm deleted: %d\n", id.as<int>()); 
+    } else {
+      TRACE("Alarm not found: %d\n", id.as<int>()); 
+    }
+  }
+
+  saveAlarmsToSpiffs();
+  server.send(200, "application/json", "{\"status\":\"success\"}");
 }
+
 
 
 
@@ -208,21 +248,6 @@ void setup() {
 
   Serial.begin(115200);
 
-/*   if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3D for 128x64
-    Serial.println(F("SSD1306 allocation failed"));
-    for(;;);
-  }
-  delay(2000);
-  display.clearDisplay();
-
-  display.setTextSize(1);
-  display.setTextColor(WHITE);
-  display.setCursor(0, 10);
-  // Display static text
-  addAlarm(0b00000001, 12,30,true);
-
-  display.println(getAlarmsAsJson().c_str());
-  display.display();  */
 
   //----------------initialize server------------
   if(!SPIFFS.begin(true)){
@@ -230,10 +255,7 @@ void setup() {
      return;
   }
 
-  addAlarm(0b00000001, 12, 30, true);
-  addAlarm(0b00110001, 13, 40, true);
-  addAlarm(0b10101010, 14, 50, true);
-  addAlarm(0b11111111, 15, 0, true);
+  loadAlarmsFromSpiffs();
 
 
   WiFi.setHostname(HOSTNAME);
@@ -259,7 +281,7 @@ void setup() {
       server.send(400, "text/plain", "File not found");
       return;
     }
-    server.sendHeader("Access-Control-Allow-Origin", "*");  // Allow all origins
+    server.sendHeader("Access-Control-Allow-Origin", "*"); 
     server.sendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     server.sendHeader("Access-Control-Allow-Headers", "Content-Type");
 
@@ -277,22 +299,23 @@ void setup() {
       server.send(400, "text/plain", "File not found");
       return;
     }
+    setCorsHeaders();
     String css = file.readString();
     server.send(200, "text/css", css);
   });
 
-    server.on("/alarms", HTTP_OPTIONS, []() {
-    server.sendHeader("Access-Control-Allow-Origin", "*");
-    server.sendHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-    server.sendHeader("Access-Control-Allow-Headers", "Content-Type");
-    server.send(204); // Send success with no content
-});
+
+  server.on("/", HTTP_OPTIONS, handleOptions);
+  server.on("/alarms", HTTP_OPTIONS, handleOptions);
+  server.on("/alarms/delete", HTTP_OPTIONS, [](){
+    setCorsHeaders();
+    server.send(204);
+  }); 
+
 
   server.on("/alarms", HTTP_GET, handleGetAlarms);
-
-    server.on("/alarms", HTTP_POST, handleAddAlarm);
-
-  server.enableCORS(true);
+  server.on("/alarms", HTTP_POST, handleAddAlarm);
+  server.on("/alarms/delete", HTTP_POST, handleDeleteAlarm);
 
   server.begin();
 
