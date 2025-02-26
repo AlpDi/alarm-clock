@@ -3,9 +3,9 @@
 
 bool StorageManager::init(){
     if(!SPIFFS.begin(true)){
-        Logger::trace("error SPIFFS");
-        return;
+        return false;
     }
+    else return true;
 }
 
 

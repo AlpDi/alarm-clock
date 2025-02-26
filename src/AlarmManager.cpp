@@ -8,8 +8,8 @@ AlarmManager& AlarmManager::getInstance(){
     return instance;
 }
 
-const std::vector<Alarm>& getAlarms(){
-
+const std::vector<Alarm>& AlarmManager::getAlarms() const{
+  return alarms;
 }
 
 void AlarmManager::addAlarm(uint8_t days, int hour, int minute, bool enabled){
@@ -99,4 +99,21 @@ void AlarmManager::saveToStorage(){
   Logger::trace("Alarm saved to SPIFFS");
 }
 
+void AlarmManager::disableAlarm(int id){
+    auto it = std::find_if(alarms.begin(), alarms.end(), 
+    [id](const Alarm &obj) {return obj.getId() == id;});
+
+    if(it != alarms.end()){
+          it->setEnabled(false);
+    }
+}
+
+void AlarmManager::enableAlarm(int id){
+    auto it = std::find_if(alarms.begin(), alarms.end(), 
+    [id](const Alarm &obj) {return obj.getId() == id;});
+
+    if(it != alarms.end()){
+        it->setEnabled(true);
+    }
+}
 

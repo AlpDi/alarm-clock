@@ -15,6 +15,9 @@ public:
     int getHour() const { return hour; }
     int getMinute() const { return minute; }
     bool isEnabled() const { return enabled; }
+    void setEnabled(bool val);
+    
+    
 
 private:
     int id;

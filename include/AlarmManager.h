@@ -15,7 +15,11 @@ public:
     void loadFromStorage();
     void saveToStorage();
 
+    void disableAlarm(int id);
+    void enableAlarm(int id);
+
 private:
     AlarmManager() = default;
     std::vector<Alarm> alarms;
+
 };

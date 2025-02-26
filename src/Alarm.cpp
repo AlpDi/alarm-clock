@@ -15,4 +15,7 @@ Alarm Alarm::fromJSON(const JsonObject& json){
 
 }
 
+void Alarm::setEnabled(bool val){
+    enabled = val;
+}
 
