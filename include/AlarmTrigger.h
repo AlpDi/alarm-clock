@@ -12,7 +12,7 @@ public:
         onAlarmTriggered = callback;
     }
     void checkAlarms();
-    void snoozeAlarm(int alarmId);
+    void snoozeAlarm(int alarmId, int snoozeMinutes);
     void stopAlarm(int alarmId);
 
 private:
