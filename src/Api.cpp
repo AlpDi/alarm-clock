@@ -2,7 +2,7 @@
 #include "Api.h"
 #include <ArduinoJson.h>
 #include "AlarmManager.h"
-#include "SPIFFS.h""
+#include "SPIFFS.h"
 
 
 
@@ -85,6 +85,40 @@ void AlarmWebServer::handleDeleteAlarm(){
   server.send(200, "application/json", "{\"status\":\"success\"}");
 }
 
+void AlarmWebServer::handleToggleAlarm() {
+    setCorsHeaders();
+    
+    if(!server.hasArg("plain")) {
+        server.send(400, "application/json", "{\"status\":\"error\",\"message\":\"No data received\"}");
+        return;
+    }
+
+    JsonDocument doc;
+    DeserializationError error = deserializeJson(doc, server.arg("plain"));
+
+    if(error) {
+        server.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Invalid JSON\"}");
+        return;
+    }
+
+    if(!doc.containsKey("id") || !doc.containsKey("enabled")) {
+        server.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Missing id or enabled field\"}");
+        return;
+    }
+
+    int id = doc["id"];
+    bool enabled = doc["enabled"];
+
+    if(enabled) {
+        AlarmManager::getInstance().enableAlarm(id);
+    } else {
+        AlarmManager::getInstance().disableAlarm(id);
+    }
+
+    AlarmManager::getInstance().saveToStorage();
+    server.send(200, "application/json", "{\"status\":\"success\"}");
+}
+
 void AlarmWebServer::handleOptions(){
     setCorsHeaders();
     server.send(204);
@@ -98,10 +132,12 @@ void AlarmWebServer::setupRoutes(){
     server.on("/alarms", HTTP_GET, [this]() { this->handleGetAlarms(); });
     server.on("/alarms", HTTP_POST, [this]() { this->handleAddAlarm(); });
     server.on("/alarms/delete", HTTP_POST, [this]() { this->handleDeleteAlarm(); });
+    server.on("/alarms/toggle", HTTP_POST, [this]() { this->handleToggleAlarm(); });
 
     server.on("/", HTTP_OPTIONS, [this]() { this->handleOptions(); });
     server.on("/alarms", HTTP_OPTIONS, [this]() { this->handleOptions(); });
     server.on("/alarms/delete", HTTP_OPTIONS, [this]() { this->handleOptions(); });
+    server.on("/alarms/toggle", HTTP_OPTIONS, [this]() { this->handleOptions(); });
 }
 
 
