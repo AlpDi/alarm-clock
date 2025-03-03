@@ -1,5 +1,7 @@
 #include "Alarm.h"
 
+std::atomic<int> Alarm::s_id(0);
+
 Alarm::Alarm(uint8_t d, int h, int m, bool e)
       : days(d), hour(h), minute(m), enabled(e), id(++s_id){}
 

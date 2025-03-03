@@ -44,7 +44,14 @@ void setup(){
         buzzer.play();
     });
 }
-
+unsigned long previousMillis = 0;
+const long interval = 1000;
 void loop(){
     server.handleClient();
+
+    unsigned long currentMillis = millis();
+    if(currentMillis - previousMillis >= interval){
+        previousMillis = currentMillis;
+        trigger.checkAlarms();
+    }
 }
