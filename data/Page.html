@@ -1,242 +1,242 @@
 <!DOCTYPE html>
 <head>
-	<link rel="stylesheet" href="styles.css" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
 <body>
-	<div id="alarms-container"></div>
-	<div class="floating-buttons" id="floating-buttons">
-		<button class="modal-button" id="modal-button">+</button>
-		<button class="edit-button" id="edit-button">edit</button>
-	</div>
+  <div id="alarms-container"></div>
+  <div class="floating-buttons" id="floating-buttons">
+    <button class="modal-button" id="modal-button">+</button>
+    <button class="edit-button" id="edit-button">edit</button>
+  </div>
 
-	<div id="alarm-popup" class="modal">
-		<div class="modal-content">
-			<span class="close">&times;</span>
-			<div>
-				<label for="input-time">Choose Time: </label>
-				<input name="time" id="input-time" type="time" value="12:00" />
-			</div>
-			<div class="days-radio">
-				<label
-					><input type="radio" name="days" value="once" checked />Once</label
-				>
-				<label><input type="radio" name="days" value="daily" />Daily</label>
-				<label
-					><input type="radio" name="days" value="montofri" />Mon To Fri</label
-				>
-			</div>
-			<button id="alarmButton">Add Alarm</button>
-		</div>
-	</div>
+  <div id="alarm-popup" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <div>
+        <label for="input-time">Choose Time: </label>
+        <input name="time" id="input-time" type="time" value="12:00" />
+      </div>
+      <div class="days-radio">
+        <label
+          ><input type="radio" name="days" value="once" checked />Once</label
+        >
+        <label><input type="radio" name="days" value="daily" />Daily</label>
+        <label
+          ><input type="radio" name="days" value="montofri" />Mon To Fri</label
+        >
+      </div>
+      <button id="alarmButton">Add Alarm</button>
+    </div>
+  </div>
 
-	<script>
-		const API_URL = "http://alarmclock/alarms";
-		const API_DEL_URL = "http://alarmclock/alarms/delete";
-		const DAYS_OF_WEEK = [
-			"Sunday",
-			"Monday",
-			"Tuesday",
-			"Wednesday",
-			"Thursday",
-			"Friday",
-			"Saturday",
-			"Once",
-		];
+  <script>
+    const API_URL = "http://alarmclock/alarms";
+    const API_DEL_URL = "http://alarmclock/alarms/delete";
+    const DAYS_OF_WEEK = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Once",
+    ];
 
-		// Utility functions
-		const decodeBitmask = (days) => {
-			return DAYS_OF_WEEK.filter((_, index) => days & (1 << index));
-		};
+    // Utility functions
+    const decodeBitmask = (days) => {
+      return DAYS_OF_WEEK.filter((_, index) => days & (1 << index));
+    };
 
-		const getDaysBitmask = (selection) => {
-			const bitmasks = {
-				daily: 127, // All days (1111111)
-				montofri: 62, // Monday to Friday (0111110)
-				once: 128, // One-time alarm
-			};
-			return bitmasks[selection] || 128;
-		};
+    const getDaysBitmask = (selection) => {
+      const bitmasks = {
+        daily: 127, // All days (1111111)
+        montofri: 62, // Monday to Friday (0111110)
+        once: 128, // One-time alarm
+      };
+      return bitmasks[selection] || 128;
+    };
 
-		// API functions
-		const fetchAlarms = async () => {
-			try {
-				const response = await fetch(API_URL);
-				if (!response.ok) {
-					throw new Error(`HTTP error! status: ${response.status}`);
-				}
-				return await response.json();
-			} catch (error) {
-				console.error("Error fetching alarms:", error);
-				return [];
-			}
-		};
+    // API functions
+    const fetchAlarms = async () => {
+      try {
+        const response = await fetch(API_URL);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+      } catch (error) {
+        console.error("Error fetching alarms:", error);
+        return [];
+      }
+    };
 
-		const createAlarm = async (formData) => {
-			try {
-				const response = await fetch(API_URL, {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify(formData),
-				});
-				if (!response.ok) {
-					throw new Error(`HTTP error! status: ${response.status}`);
-				}
-				return await response.json();
-			} catch (error) {
-				console.error("Error creating alarm:", error);
-				return null;
-			}
-		};
+    const createAlarm = async (formData) => {
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+      } catch (error) {
+        console.error("Error creating alarm:", error);
+        return null;
+      }
+    };
 
-		const deleteAlarm = async (ids) => {
-			try {
-				const response = await fetch(API_DEL_URL, {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify(ids),
-				});
-				if (!response.ok) {
-					throw new Error(`HTTP error! status: ${response.status}`);
-				}
-				return await response.json();
-			} catch (error) {
-				console.error("Error deleting alarm:", error);
-				return null;
-			}
-		};
+    const deleteAlarm = async (ids) => {
+      try {
+        const response = await fetch(API_DEL_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(ids),
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+      } catch (error) {
+        console.error("Error deleting alarm:", error);
+        return null;
+      }
+    };
 
-		// UI functions
-		const createAlarmElement = (alarm) => {
-			const alarmDiv = document.createElement("div");
-			alarmDiv.className = "Alarm";
+    // UI functions
+    const createAlarmElement = (alarm) => {
+      const alarmDiv = document.createElement("div");
+      alarmDiv.className = "Alarm";
 
-			alarmDiv.dataset.alarmId = alarm.id;
+      alarmDiv.dataset.alarmId = alarm.id;
 
-			const timeDayDiv = document.createElement("div");
-			timeDayDiv.className = "time-day";
+      const timeDayDiv = document.createElement("div");
+      timeDayDiv.className = "time-day";
 
-			const timeSpan = document.createElement("span");
-			timeSpan.className = "time";
-			timeSpan.textContent = `${alarm.hour}:${String(alarm.minute).padStart(
-				2,
-				"0"
-			)}`;
+      const timeSpan = document.createElement("span");
+      timeSpan.className = "time";
+      timeSpan.textContent = `${alarm.hour}:${String(alarm.minute).padStart(
+        2,
+        "0"
+      )}`;
 
-			const daysSpan = document.createElement("span");
-			daysSpan.className = "days";
-			daysSpan.textContent = decodeBitmask(alarm.days).join(", ");
+      const daysSpan = document.createElement("span");
+      daysSpan.className = "days";
+      daysSpan.textContent = decodeBitmask(alarm.days).join(", ");
 
-			const toggle = document.createElement("input");
-			toggle.type = "checkbox";
-			toggle.className = "alarm-checkbox";
-			toggle.checked = alarm.enabled || false;
+      const toggle = document.createElement("input");
+      toggle.type = "checkbox";
+      toggle.className = "alarm-checkbox";
+      toggle.checked = alarm.enabled || false;
 
-			const deleteToggle = document.createElement("input");
-			deleteToggle.type = "checkbox";
-			deleteToggle.className = "delete-checkbox";
-			deleteToggle.checked = false;
+      const deleteToggle = document.createElement("input");
+      deleteToggle.type = "checkbox";
+      deleteToggle.className = "delete-checkbox";
+      deleteToggle.checked = false;
 
-			timeDayDiv.append(timeSpan, daysSpan);
-			alarmDiv.append(timeDayDiv, toggle, deleteToggle);
+      timeDayDiv.append(timeSpan, daysSpan);
+      alarmDiv.append(timeDayDiv, toggle, deleteToggle);
 
-			return alarmDiv;
-		};
+      return alarmDiv;
+    };
 
-		const displayAlarms = async () => {
-			const alarms = await fetchAlarms();
-			const alarmsContainer = document.getElementById("alarms-container");
-			const alarmsWrapper = document.createElement("div");
-			alarmsWrapper.className = "Alarms";
+    const displayAlarms = async () => {
+      const alarms = await fetchAlarms();
+      const alarmsContainer = document.getElementById("alarms-container");
+      const alarmsWrapper = document.createElement("div");
+      alarmsWrapper.className = "Alarms";
 
-			alarmsContainer.innerHTML = ""; // Clear existing alarms
-			alarmsWrapper.append(...alarms.map(createAlarmElement));
-			alarmsContainer.appendChild(alarmsWrapper);
-		};
-		//TODO handle edits
+      alarmsContainer.innerHTML = ""; // Clear existing alarms
+      alarmsWrapper.append(...alarms.map(createAlarmElement));
+      alarmsContainer.appendChild(alarmsWrapper);
+    };
 
-		const editBtn = document.getElementById("edit-button");
+    //handle edits
+    const editBtn = document.getElementById("edit-button");
 
-		const floatingButtons = document.getElementById("floating-buttons");
+    const floatingButtons = document.getElementById("floating-buttons");
 
-		const deleteBtn = document.createElement("button");
-		deleteBtn.className = "delete-button";
-		deleteBtn.innerHTML = "del";
-		deleteBtn.style.display = "none";
-		floatingButtons.insertBefore(deleteBtn, editBtn);
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "delete-button";
+    deleteBtn.innerHTML = "del";
+    deleteBtn.style.display = "none";
+    floatingButtons.insertBefore(deleteBtn, editBtn);
 
-		editBtn.onclick = () => {
-			deleteBtn.style.display =
-				deleteBtn.style.display === "none" ? "Block" : "none";
-			document.querySelectorAll(".alarm-checkbox").forEach((el) => {
-				el.style.display = el.style.display === "none" ? "block" : "none";
-			});
-			document.querySelectorAll(".delete-checkbox").forEach((el) => {
-				el.style.display = el.style.display === "block" ? "none" : "block";
-				el.checked = false;
-			});
-		};
+    editBtn.onclick = () => {
+      deleteBtn.style.display =
+        deleteBtn.style.display === "none" ? "Block" : "none";
+      document.querySelectorAll(".alarm-checkbox").forEach((el) => {
+        el.style.display = el.style.display === "none" ? "block" : "none";
+      });
+      document.querySelectorAll(".delete-checkbox").forEach((el) => {
+        el.style.display = el.style.display === "block" ? "none" : "block";
+        el.checked = false;
+      });
+    };
 
-		deleteBtn.onclick = async () => {
-			const selectedIds = new Set();
+    deleteBtn.onclick = async () => {
+      const selectedIds = new Set();
 
-			document.querySelectorAll(".delete-checkbox:checked").forEach((el) => {
-				selectedIds.add(parseInt(el.parentElement.dataset.alarmId));
-			});
-			console.log(selectedIds);
-			console.log(JSON.stringify({ ids: [...selectedIds] }));
+      document.querySelectorAll(".delete-checkbox:checked").forEach((el) => {
+        selectedIds.add(parseInt(el.parentElement.dataset.alarmId));
+      });
+      console.log(selectedIds);
+      console.log(JSON.stringify({ ids: [...selectedIds] }));
 
-			editBtn.click();
+      editBtn.click();
 
-			const result = await deleteAlarm({ ids: [...selectedIds] });
-			if (result) {
-				await displayAlarms();
-			}
-		};
+      const result = await deleteAlarm({ ids: [...selectedIds] });
+      if (result) {
+        await displayAlarms();
+      }
+    };
 
-		// Modal handling
-		const modal = document.getElementById("alarm-popup");
-		const modalBtn = document.getElementById("modal-button");
-		const closeBtn = document.getElementsByClassName("close")[0];
+    // Modal handling
+    const modal = document.getElementById("alarm-popup");
+    const modalBtn = document.getElementById("modal-button");
+    const closeBtn = document.getElementsByClassName("close")[0];
 
-		const closeModal = () => {
-			modal.style.display = "none";
-		};
+    const closeModal = () => {
+      modal.style.display = "none";
+    };
 
-		modalBtn.onclick = () => (modal.style.display = "block");
-		closeBtn.onclick = closeModal;
-		window.onclick = (event) => {
-			if (event.target === modal) closeModal();
-		};
+    modalBtn.onclick = () => (modal.style.display = "block");
+    closeBtn.onclick = closeModal;
+    window.onclick = (event) => {
+      if (event.target === modal) closeModal();
+    };
 
-		// Form handling
-		document
-			.getElementById("alarmButton")
-			.addEventListener("click", async () => {
-				const timeInput = document.getElementById("input-time").value;
-				const daysInput = document.querySelector(
-					'input[name="days"]:checked'
-				).value;
-				const [hour, minute] = timeInput.split(":").map(Number);
+    // Form handling
+    document
+      .getElementById("alarmButton")
+      .addEventListener("click", async () => {
+        const timeInput = document.getElementById("input-time").value;
+        const daysInput = document.querySelector(
+          'input[name="days"]:checked'
+        ).value;
+        const [hour, minute] = timeInput.split(":").map(Number);
 
-				const formData = {
-					hour,
-					minute,
-					days: getDaysBitmask(daysInput),
-					enabled: true,
-				};
+        const formData = {
+          hour,
+          minute,
+          days: getDaysBitmask(daysInput),
+          enabled: true,
+        };
 
-				const result = await createAlarm(formData);
-				if (result) {
-					await displayAlarms();
-					closeModal();
-				}
-			});
+        const result = await createAlarm(formData);
+        if (result) {
+          await displayAlarms();
+          closeModal();
+        }
+      });
 
-		displayAlarms();
-	</script>
+    displayAlarms();
+  </script>
 </body>
