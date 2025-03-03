@@ -31,10 +31,6 @@ void AlarmManager::deleteAlarms(const std::vector<int>& ids){
     }
 }
 
-const std::vector<Alarm>& AlarmManager::getAlarms() const{
-    return alarms;
-}
-
 std::string AlarmManager::getAlarmsAsJson() const{
     JsonDocument doc;
     JsonArray alarmsArray = doc.to<JsonArray>();

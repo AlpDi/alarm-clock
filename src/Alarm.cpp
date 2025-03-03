@@ -1,6 +1,6 @@
 #include "Alarm.h"
 
-Alarm::Alarm(uint8_t d, int h, int m, bool e = true)
+Alarm::Alarm(uint8_t d, int h, int m, bool e)
       : days(d), hour(h), minute(m), enabled(e), id(++s_id){}
 
 void Alarm::toJSON (JsonObject& json)const{
