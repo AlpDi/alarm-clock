@@ -18,7 +18,7 @@ Buzzer& buzzer = Buzzer::getInstance();
 
 void setup(){
 
-    buzzer.begin(23);
+    buzzer.begin(2);
 
     Logger::init();
 

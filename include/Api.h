@@ -16,6 +16,7 @@ private:
     void handleGetAlarms();
     void handleAddAlarm();
     void handleDeleteAlarm();
+    void handleToggleAlarm();
     void handleOptions();
     void handleRoot();
     void handleStyles();
