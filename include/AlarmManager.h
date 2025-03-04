@@ -18,6 +18,8 @@ public:
     void disableAlarm(int id);
     void enableAlarm(int id);
 
+    void simulateAlarm();
+
 private:
     AlarmManager() = default;
     std::vector<Alarm> alarms;

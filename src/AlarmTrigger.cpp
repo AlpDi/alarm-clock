@@ -9,6 +9,7 @@ AlarmTrigger& AlarmTrigger::getInstance(){
 void AlarmTrigger::checkAlarms(){
     auto& alarmManager = AlarmManager::getInstance();
     const auto& alarms = alarmManager.getAlarms();
+
     time_t now = time(nullptr);
 
     auto it = snoozedAlarms.begin();
@@ -24,6 +25,7 @@ void AlarmTrigger::checkAlarms(){
                         onAlarmTriggered(alarm);
                     }
                     markAlarmActive(alarmId);
+                    Logger::trace("breakpoint");
                     break;
                 }
             }
@@ -33,6 +35,7 @@ void AlarmTrigger::checkAlarms(){
     }
 
     for(const auto& alarm: alarms){
+        Logger::trace("AlarmId: %d enabled: %d",alarm.getId(), alarm.isEnabled());
         if(isAlarmActive(alarm.getId())||isAlarmSnoozed(alarm.getId())){
             continue;
         }

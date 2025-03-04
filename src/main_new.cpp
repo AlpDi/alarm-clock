@@ -17,8 +17,9 @@ AlarmTrigger& trigger = AlarmTrigger::getInstance();
 Buzzer& buzzer = Buzzer::getInstance();
 
 void setup(){
-
-    buzzer.begin(2);
+    TimeManager::init();
+    
+    buzzer.begin(26);
 
     Logger::init();
 
@@ -31,6 +32,8 @@ void setup(){
         Logger::trace("Failed to connect to WiFi");
         return;
     }
+
+    
 
     Logger::trace("Connected to WiFi");
 
@@ -46,6 +49,7 @@ void setup(){
 }
 unsigned long previousMillis = 0;
 const long interval = 1000;
+
 void loop(){
     server.handleClient();
 
@@ -53,5 +57,6 @@ void loop(){
     if(currentMillis - previousMillis >= interval){
         previousMillis = currentMillis;
         trigger.checkAlarms();
+        Logger::trace("checking alarms");
     }
 }

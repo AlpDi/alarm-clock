@@ -2,6 +2,7 @@
 #include <ArduinoJson.h>
 #include <SPIFFS.h>
 #include "Logger.h"
+#include "TimeManager.h"
 
 AlarmManager& AlarmManager::getInstance(){
     static AlarmManager instance;
@@ -111,5 +112,10 @@ void AlarmManager::enableAlarm(int id){
     if(it != alarms.end()){
         it->setEnabled(true);
     }
+}
+
+void AlarmManager::simulateAlarm(){
+  TimeManager::TimeInfo currTime = TimeManager::getCurrentTime();
+  addAlarm(128, currTime.hour, currTime.minute, true);
 }
 

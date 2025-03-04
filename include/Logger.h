@@ -6,6 +6,7 @@ public:
     template<typename... Args>
     static void trace(const char* format, Args... args){
         Serial.printf(format, args...);
+        Serial.printf("\n");
     }
 
     static void init() {
