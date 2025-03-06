@@ -7,6 +7,7 @@
 #include "Buzzer.h"
 #include "AlarmTrigger.h"
 #include "TimeManager.h"
+#include "buttonManager.h"
 
 
 #define HOSTNAME "alarmclock"
@@ -33,6 +34,7 @@ void setup(){
         return;
     }
 
+    buttonManager::getInstance().begin(12,13,14);
     
 
     Logger::trace("Connected to WiFi");
@@ -52,6 +54,10 @@ const long interval = 1000;
 
 void loop(){
     server.handleClient();
+    buttonManager::getInstance().handleSimButtonPress();
+    buttonManager::getInstance().handleStopButtonPress();
+    buttonManager::getInstance().handleSnoozeButtonPress();
+
 
     unsigned long currentMillis = millis();
     if(currentMillis - previousMillis >= interval){

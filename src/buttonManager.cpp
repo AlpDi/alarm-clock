@@ -19,7 +19,7 @@ void buttonManager::begin(uint8_t stopButtonPin, uint8_t snoozeButtonPin, uint8_
 }
 
 //wait 50ms after each state change to mitigate noise in button input
-bool readButtonDebounced(uint8_t pin, uint32_t debounceTime = 50) {
+bool buttonManager::readButtonDebounced(uint8_t pin, uint32_t debounceTime) {
   static uint32_t lastDebounceTime = 0;
   static bool lastButtonState = false;
   static bool buttonState = false;
@@ -42,43 +42,44 @@ bool readButtonDebounced(uint8_t pin, uint32_t debounceTime = 50) {
 }
 
 void buttonManager::handleStopButtonPress(){
-    static uint lastPressTime = 0;
-    const uint MIN_PRESS_INTERVAL = 250;
+    static uint32_t lastPressTime = 0;
+    const uint32_t MIN_PRESS_INTERVAL = 250;
 
     if(readButtonDebounced(stopPin)){
         uint32_t curTime = millis();
         if(curTime - lastPressTime >= MIN_PRESS_INTERVAL){
-
             for(auto& alarmId: AlarmTrigger::getInstance().getActiveAlarms()){
                 AlarmTrigger::getInstance().stopAlarm(alarmId);
             }
+            lastPressTime = curTime;
         }
     }
 }
 
 void buttonManager::handleSnoozeButtonPress(){
-    static uint lastPressTime = 0;
-    const uint MIN_PRESS_INTERVAL = 250;
+    static uint32_t lastPressTime = 0;
+    const uint32_t MIN_PRESS_INTERVAL = 250;
 
-    if(readButtonDebounced(stopPin)){
+    if(readButtonDebounced(snoozePin)){
         uint32_t curTime = millis();
         if(curTime - lastPressTime >= MIN_PRESS_INTERVAL){
-
             for(auto& alarmId: AlarmTrigger::getInstance().getActiveAlarms()){
                 AlarmTrigger::getInstance().snoozeAlarm(alarmId, 10);
             }
+            lastPressTime = curTime;
         }
     }
 }
 
 void buttonManager::handleSimButtonPress(){
-    static uint lastPressTime = 0;
-    const uint MIN_PRESS_INTERVAL = 250;
+    static uint32_t lastPressTime = 0;
+    const uint32_t MIN_PRESS_INTERVAL = 250;
 
     if(readButtonDebounced(simPin)){
         uint32_t curTime = millis();
         if(curTime - lastPressTime >= MIN_PRESS_INTERVAL){
             AlarmManager::getInstance().simulateAlarm();
+            lastPressTime = curTime;
         }  
     }
 }
