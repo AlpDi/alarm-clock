@@ -1,15 +1,19 @@
 #include "buttonManager.h"
-#include "AlarmTrigger.h"
+
 #include <Arduino.h>
+
+#include <map>
+
 #include "AlarmManager.h"
+#include "AlarmTrigger.h"
 #include "Logger.h"
 
-buttonManager& buttonManager::getInstance(){
+buttonManager& buttonManager::getInstance() {
     static buttonManager instance;
     return instance;
 }
 
-void buttonManager::begin(uint8_t stopButtonPin, uint8_t snoozeButtonPin, uint8_t simButtonPin){
+void buttonManager::begin(uint8_t stopButtonPin, uint8_t snoozeButtonPin, uint8_t simButtonPin) {
     stopPin = stopButtonPin;
     snoozePin = snoozeButtonPin;
     simPin = simButtonPin;
@@ -19,38 +23,45 @@ void buttonManager::begin(uint8_t stopButtonPin, uint8_t snoozeButtonPin, uint8_
     pinMode(simPin, INPUT_PULLUP);
 }
 
-//wait 50ms after each state change to mitigate noise in button input
+// wait 50ms after each state change to mitigate noise in button input
 bool buttonManager::readButtonDebounced(uint8_t pin, uint32_t debounceTime) {
-  static uint32_t lastDebounceTime = 0;
-  static bool lastButtonState = false;
-  static bool buttonState = false;
-  
+    struct ButtonState {
+        uint32_t lastDebounceTime = 0;
+        bool lastButtonState = false;
+        bool buttonState = false;
+    };
 
-  bool rawState = !digitalRead(pin);
+    static std::map<uint8_t, ButtonState> buttonStates;
 
-  if (rawState != lastButtonState) {
-    lastDebounceTime = millis();
-    lastButtonState = rawState;
-  }
-  
-  if ((millis() - lastDebounceTime) > debounceTime) {
-    if (buttonState != rawState) {
-      buttonState = rawState;
+    auto& state = buttonStates[pin];
+
+    bool rawState = !digitalRead(pin);
+
+    if (rawState != state.lastButtonState) {
+        state.lastDebounceTime = millis();
+        state.lastButtonState = rawState;
     }
-  }
-  
-  return buttonState;
+
+    if ((millis() - state.lastDebounceTime) > debounceTime) {
+        if (state.buttonState != rawState) {
+            state.buttonState = rawState;
+        }
+    }
+
+    return state.buttonState;
 }
 
-void buttonManager::handleStopButtonPress(){
+void buttonManager::handleStopButtonPress() {
     static uint32_t lastPressTime = 0;
     const uint32_t MIN_PRESS_INTERVAL = 250;
 
-    if(readButtonDebounced(stopPin)){
+    // Logger::trace("Stop button raw state: %d", !digitalRead(stopPin));
+
+    if (readButtonDebounced(stopPin)) {
         uint32_t curTime = millis();
-        if(curTime - lastPressTime >= MIN_PRESS_INTERVAL){
+        if (curTime - lastPressTime >= MIN_PRESS_INTERVAL) {
             Logger::trace("check Stop Button");
-            for(auto& alarmId: AlarmTrigger::getInstance().getActiveAlarms()){
+            for (auto& alarmId : AlarmTrigger::getInstance().getActiveAlarms()) {
                 AlarmTrigger::getInstance().stopAlarm(alarmId);
             }
             lastPressTime = curTime;
@@ -58,15 +69,15 @@ void buttonManager::handleStopButtonPress(){
     }
 }
 
-void buttonManager::handleSnoozeButtonPress(){
+void buttonManager::handleSnoozeButtonPress() {
     static uint32_t lastPressTime = 0;
     const uint32_t MIN_PRESS_INTERVAL = 250;
 
-    if(readButtonDebounced(snoozePin)){
+    if (readButtonDebounced(snoozePin)) {
         uint32_t curTime = millis();
-        if(curTime - lastPressTime >= MIN_PRESS_INTERVAL){
+        if (curTime - lastPressTime >= MIN_PRESS_INTERVAL) {
             Logger::trace("check Snooze Button");
-            for(auto& alarmId: AlarmTrigger::getInstance().getActiveAlarms()){
+            for (auto& alarmId : AlarmTrigger::getInstance().getActiveAlarms()) {
                 AlarmTrigger::getInstance().snoozeAlarm(alarmId, 10);
             }
             lastPressTime = curTime;
@@ -74,16 +85,16 @@ void buttonManager::handleSnoozeButtonPress(){
     }
 }
 
-void buttonManager::handleSimButtonPress(){
+void buttonManager::handleSimButtonPress() {
     static uint32_t lastPressTime = 0;
     const uint32_t MIN_PRESS_INTERVAL = 250;
 
-    if(readButtonDebounced(simPin)){
+    if (readButtonDebounced(simPin)) {
         uint32_t curTime = millis();
-        if(curTime - lastPressTime >= MIN_PRESS_INTERVAL){
+        if (curTime - lastPressTime >= MIN_PRESS_INTERVAL) {
             Logger::trace("check Sim Button");
             AlarmManager::getInstance().simulateAlarm();
             lastPressTime = curTime;
-        }  
+        }
     }
 }

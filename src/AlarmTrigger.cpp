@@ -1,26 +1,27 @@
 #include "AlarmTrigger.h"
+
 #include "Logger.h"
 
-AlarmTrigger& AlarmTrigger::getInstance(){
+AlarmTrigger& AlarmTrigger::getInstance() {
     static AlarmTrigger instance;
     return instance;
 }
 
-void AlarmTrigger::checkAlarms(){
+void AlarmTrigger::checkAlarms() {
     auto& alarmManager = AlarmManager::getInstance();
     const auto& alarms = alarmManager.getAlarms();
 
     time_t now = time(nullptr);
 
     auto it = snoozedAlarms.begin();
-    while(it != snoozedAlarms.end()){
-        if(now >= it->second){
+    while (it != snoozedAlarms.end()) {
+        if (now >= it->second) {
             int alarmId = it->first;
             it = snoozedAlarms.erase(it);
 
-            for (const auto& alarm: alarms){
-                if(alarm.getId() == alarmId && alarm.isEnabled()){
-                    if(onAlarmTriggered){
+            for (const auto& alarm : alarms) {
+                if (alarm.getId() == alarmId && alarm.isEnabled()) {
+                    if (onAlarmTriggered) {
                         Logger::trace("Snoozed alarm %d reactivated", alarmId);
                         onAlarmTriggered(alarm);
                     }
@@ -29,27 +30,27 @@ void AlarmTrigger::checkAlarms(){
                     break;
                 }
             }
-        }else{
+        } else {
             ++it;
         }
     }
 
-    for(const auto& alarm: alarms){
-        Logger::trace("AlarmId: %d enabled: %d",alarm.getId(), alarm.isEnabled());
-        if(isAlarmActive(alarm.getId())||isAlarmSnoozed(alarm.getId())){
+    for (const auto& alarm : alarms) {
+        Logger::trace("AlarmId: %d enabled: %d", alarm.getId(), alarm.isEnabled());
+        if (isAlarmActive(alarm.getId()) || isAlarmSnoozed(alarm.getId())) {
             continue;
         }
-        if(alarm.isEnabled() && 
-        TimeManager::isTimeToTriggerAlarm(alarm.getDays(),alarm.getHour(), alarm.getMinute())){
+        if (alarm.isEnabled() && TimeManager::isTimeToTriggerAlarm(alarm.getDays(), alarm.getHour(),
+                                                                   alarm.getMinute())) {
             Logger::trace("Alarm triggered: %d\n", alarm.getId());
 
-            if(alarm.getDays() & 0b10000000){
+            if (alarm.getDays() & 0b10000000) {
                 AlarmManager::getInstance().disableAlarm(alarm.getId());
                 AlarmManager::getInstance().saveToStorage();
                 Logger::trace("One-time Alarm %d disabled after triggering", alarm.getId());
             }
 
-            if(onAlarmTriggered){
+            if (onAlarmTriggered) {
                 onAlarmTriggered(alarm);
             }
             markAlarmActive(alarm.getId());
@@ -57,18 +58,19 @@ void AlarmTrigger::checkAlarms(){
     }
 
     auto activeIt = activeAlarms.begin();
-    while(activeIt != activeAlarms.end()){
+    while (activeIt != activeAlarms.end()) {
         bool shouldRemain = false;
 
-        for(const auto& alarm: alarms){
-            if(alarm.getId() == *activeIt && alarm.isEnabled() && 
-            TimeManager::isTimeToTriggerAlarm(alarm.getDays(), alarm.getHour(), alarm.getMinute())){
+        for (const auto& alarm : alarms) {
+            if (alarm.getId() == *activeIt && alarm.isEnabled() &&
+                TimeManager::isTimeToTriggerAlarm(alarm.getDays(), alarm.getHour(),
+                                                  alarm.getMinute())) {
                 shouldRemain = true;
                 break;
             }
         }
 
-        if(!shouldRemain){
+        if (!shouldRemain) {
             Logger::trace("Alarm %d no longer active", *activeIt);
             activeIt = activeAlarms.erase(activeIt);
         } else {
@@ -77,30 +79,28 @@ void AlarmTrigger::checkAlarms(){
     }
 }
 
-
-void AlarmTrigger::stopAlarm(int alarmId){
+void AlarmTrigger::stopAlarm(int alarmId) {
     clearAlarmActive(alarmId);
 
-    auto it = std::find_if(snoozedAlarms.begin(), snoozedAlarms.end(),
-    [alarmId](const std::pair<int,time_t> pair){
-        return pair.first == alarmId;
-    });
-    if (it != snoozedAlarms.end()){
+    auto it = std::find_if(
+        snoozedAlarms.begin(), snoozedAlarms.end(),
+        [alarmId](const std::pair<int, time_t> pair) { return pair.first == alarmId; });
+    if (it != snoozedAlarms.end()) {
         snoozedAlarms.erase(it);
     }
     Logger::trace("Alarm %d stopped\n", alarmId);
 }
 
-void AlarmTrigger::snoozeAlarm(int alarmId, int snoozeMinutes){
-
+void AlarmTrigger::snoozeAlarm(int alarmId, int snoozeMinutes) {
     clearAlarmActive(alarmId);
 
     time_t snoozeUntil = time(nullptr) + snoozeMinutes * 60;
 
-    auto it = std::find_if(snoozedAlarms.begin(), snoozedAlarms.end(), 
-    [alarmId](const std::pair<int,time_t> pair){return pair.first == alarmId;});
+    auto it = std::find_if(
+        snoozedAlarms.begin(), snoozedAlarms.end(),
+        [alarmId](const std::pair<int, time_t> pair) { return pair.first == alarmId; });
 
-    if(it != snoozedAlarms.end()){
+    if (it != snoozedAlarms.end()) {
         it->second = snoozeUntil;
     } else {
         snoozedAlarms.emplace_back(alarmId, snoozeUntil);
@@ -108,38 +108,35 @@ void AlarmTrigger::snoozeAlarm(int alarmId, int snoozeMinutes){
     Logger::trace("Alarm %d snoozed for %d minutes", alarmId, snoozeMinutes);
 }
 
-bool AlarmTrigger::isAlarmActive(int alarmId) const{
+bool AlarmTrigger::isAlarmActive(int alarmId) const {
     return std::find(activeAlarms.begin(), activeAlarms.end(), alarmId) != activeAlarms.end();
 }
 
-void AlarmTrigger::markAlarmActive(int alarmId){
-    if(!isAlarmActive(alarmId)){
+void AlarmTrigger::markAlarmActive(int alarmId) {
+    if (!isAlarmActive(alarmId)) {
         activeAlarms.push_back(alarmId);
     }
 }
 
-void AlarmTrigger::clearAlarmActive(int alarmId){
+void AlarmTrigger::clearAlarmActive(int alarmId) {
     auto it = std::find(activeAlarms.begin(), activeAlarms.end(), alarmId);
-    if(it != activeAlarms.end()){
+    if (it != activeAlarms.end()) {
         activeAlarms.erase(it);
     }
 }
 
-bool AlarmTrigger::isAlarmSnoozed(int alarmId)const{
+bool AlarmTrigger::isAlarmSnoozed(int alarmId) const {
     return std::find_if(snoozedAlarms.begin(), snoozedAlarms.end(),
-    [alarmId](const std::pair<int, time_t> pair){return pair.first == alarmId;}) != snoozedAlarms.end();
+                        [alarmId](const std::pair<int, time_t> pair) {
+                            return pair.first == alarmId;
+                        }) != snoozedAlarms.end();
 }
 
-time_t AlarmTrigger::getSnoozedUntil(int alarmId)const{
-    auto it = std::find_if(snoozedAlarms.begin(), snoozedAlarms.end(),
-    [alarmId](const std::pair<int,time_t> pair){return pair.first == alarmId;});
+time_t AlarmTrigger::getSnoozedUntil(int alarmId) const {
+    auto it = std::find_if(
+        snoozedAlarms.begin(), snoozedAlarms.end(),
+        [alarmId](const std::pair<int, time_t> pair) { return pair.first == alarmId; });
     return (it != snoozedAlarms.end()) ? it->second : 0;
 }
 
-std::vector<int> AlarmTrigger::getActiveAlarms(){
-    return activeAlarms;
-}
-
-
-
-    
+std::vector<int> AlarmTrigger::getActiveAlarms() { return activeAlarms; }
