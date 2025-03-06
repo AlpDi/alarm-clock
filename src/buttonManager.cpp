@@ -2,6 +2,7 @@
 #include "AlarmTrigger.h"
 #include <Arduino.h>
 #include "AlarmManager.h"
+#include "Logger.h"
 
 buttonManager& buttonManager::getInstance(){
     static buttonManager instance;
@@ -48,6 +49,7 @@ void buttonManager::handleStopButtonPress(){
     if(readButtonDebounced(stopPin)){
         uint32_t curTime = millis();
         if(curTime - lastPressTime >= MIN_PRESS_INTERVAL){
+            Logger::trace("check Stop Button");
             for(auto& alarmId: AlarmTrigger::getInstance().getActiveAlarms()){
                 AlarmTrigger::getInstance().stopAlarm(alarmId);
             }
@@ -63,6 +65,7 @@ void buttonManager::handleSnoozeButtonPress(){
     if(readButtonDebounced(snoozePin)){
         uint32_t curTime = millis();
         if(curTime - lastPressTime >= MIN_PRESS_INTERVAL){
+            Logger::trace("check Snooze Button");
             for(auto& alarmId: AlarmTrigger::getInstance().getActiveAlarms()){
                 AlarmTrigger::getInstance().snoozeAlarm(alarmId, 10);
             }
@@ -78,6 +81,7 @@ void buttonManager::handleSimButtonPress(){
     if(readButtonDebounced(simPin)){
         uint32_t curTime = millis();
         if(curTime - lastPressTime >= MIN_PRESS_INTERVAL){
+            Logger::trace("check Sim Button");
             AlarmManager::getInstance().simulateAlarm();
             lastPressTime = curTime;
         }  
