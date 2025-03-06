@@ -136,6 +136,10 @@ time_t AlarmTrigger::getSnoozedUntil(int alarmId)const{
     return (it != snoozedAlarms.end()) ? it->second : 0;
 }
 
+std::vector<int> AlarmTrigger::getActiveAlarms(){
+    return activeAlarms;
+}
+
 
 
     

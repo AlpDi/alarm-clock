@@ -14,6 +14,7 @@ public:
     void checkAlarms();
     void snoozeAlarm(int alarmId, int snoozeMinutes);
     void stopAlarm(int alarmId);
+    std::vector<int> getActiveAlarms();
 
 private:
     AlarmTrigger() = default;
