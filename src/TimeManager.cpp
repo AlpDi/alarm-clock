@@ -30,8 +30,8 @@ bool TimeManager::compareTime(const TimeInfo& time1, const TimeInfo& time2) {
 
 bool TimeManager::isTimeToTriggerAlarm(uint8_t alarmDays, int alarmHour, int alarmMinute) {
     TimeInfo currentTime = getCurrentTime();
-    Logger::trace("Day: %d Hour: %d Minute: %d aD: %d aH: %d aM: %d", currentTime.weekDay,
-                  currentTime.hour, currentTime.minute, alarmDays, alarmHour, alarmMinute);
+    // Logger::trace("Day: %d Hour: %d Minute: %d aD: %d aH: %d aM: %d", currentTime.weekDay,
+    //            currentTime.hour, currentTime.minute, alarmDays, alarmHour, alarmMinute);
     if (alarmDays & 0b10000000) {
         return (currentTime.hour == alarmHour && currentTime.minute == alarmMinute);
     }

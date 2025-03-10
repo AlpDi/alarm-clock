@@ -1,5 +1,8 @@
 #include "AlarmTrigger.h"
 
+#include <map>
+
+#include "Buzzer.h"
 #include "Logger.h"
 
 AlarmTrigger& AlarmTrigger::getInstance() {
@@ -36,18 +39,33 @@ void AlarmTrigger::checkAlarms() {
     }
 
     for (const auto& alarm : alarms) {
-        Logger::trace("AlarmId: %d enabled: %d", alarm.getId(), alarm.isEnabled());
+        // Skip if alarm is already active or snoozed
         if (isAlarmActive(alarm.getId()) || isAlarmSnoozed(alarm.getId())) {
             continue;
         }
+
+        static std::map<int, time_t>
+            lastTriggerTime;  // Keep track of last trigger time for each alarm
+
         if (alarm.isEnabled() && TimeManager::isTimeToTriggerAlarm(alarm.getDays(), alarm.getHour(),
                                                                    alarm.getMinute())) {
-            Logger::trace("Alarm triggered: %d\n", alarm.getId());
+            // Only trigger if we haven't triggered this alarm in the last minute
+            if (lastTriggerTime.find(alarm.getId()) == lastTriggerTime.end() ||
+                now - lastTriggerTime[alarm.getId()] >= 60) {  // 60 seconds
+                Logger::trace("Alarm triggered: %d\n", alarm.getId());
 
-            if (onAlarmTriggered) {
-                onAlarmTriggered(alarm);
+                markAlarmActive(alarm.getId());  // Mark active first
+
+                if (onAlarmTriggered) {
+                    onAlarmTriggered(alarm);
+                } else {
+                    Logger::trace("Warning: No alarm trigger callback set!");
+                    // Fallback direct call to ensure buzzer plays
+                    Buzzer::getInstance().play();
+                }
+
+                lastTriggerTime[alarm.getId()] = now;
             }
-            markAlarmActive(alarm.getId());
         }
     }
 
