@@ -43,11 +43,7 @@ void AlarmTrigger::checkAlarms(){
         TimeManager::isTimeToTriggerAlarm(alarm.getDays(),alarm.getHour(), alarm.getMinute())){
             Logger::trace("Alarm triggered: %d\n", alarm.getId());
 
-            if(alarm.getDays() & 0b10000000){
-                AlarmManager::getInstance().disableAlarm(alarm.getId());
-                AlarmManager::getInstance().saveToStorage();
-                Logger::trace("One-time Alarm %d disabled after triggering", alarm.getId());
-            }
+            
 
             if(onAlarmTriggered){
                 onAlarmTriggered(alarm);
@@ -60,6 +56,7 @@ void AlarmTrigger::checkAlarms(){
     while(activeIt != activeAlarms.end()){
         bool shouldRemain = false;
 
+
         for(const auto& alarm: alarms){
             if(alarm.getId() == *activeIt && alarm.isEnabled() && 
             TimeManager::isTimeToTriggerAlarm(alarm.getDays(), alarm.getHour(), alarm.getMinute())){
@@ -70,6 +67,13 @@ void AlarmTrigger::checkAlarms(){
 
         if(!shouldRemain){
             Logger::trace("Alarm %d no longer active", *activeIt);
+            for(const auto& alarm: alarms){
+                if(alarm.getId() == *activeIt && alarm.getDays() & 0b10000000){
+                    AlarmManager::getInstance().disableAlarm(alarm.getId());
+                    AlarmManager::getInstance().saveToStorage();
+                    Logger::trace("One-time Alarm %d disabled after triggering", alarm.getId());
+                }
+            }
             activeIt = activeAlarms.erase(activeIt);
         } else {
             ++activeIt;
