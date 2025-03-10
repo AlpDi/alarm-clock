@@ -2,8 +2,8 @@
 #include <time.h>
 
 class TimeManager {
-public: 
-    struct TimeInfo{
+   public:
+    struct TimeInfo {
         int hour;
         int minute;
         int second;
@@ -14,4 +14,3 @@ public:
     static bool compareTime(const TimeInfo& time1, const TimeInfo& time2);
     static bool isTimeToTriggerAlarm(uint8_t alarmDays, int alarmHour, int alarmMinute);
 };
-

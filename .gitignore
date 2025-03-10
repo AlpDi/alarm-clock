@@ -6,3 +6,4 @@
 src/secrets.h
 .prettierrc
 src/config.h
+.clang-format

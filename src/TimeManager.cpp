@@ -1,14 +1,14 @@
 #include "TimeManager.h"
-#include "config.h"
-#include "Arduino.h"
-#include "Logger.h"
+
 #include <time.h>
 
-void TimeManager::init(){
-    configTzTime(timezone, "pool.ntp.org");
-}
+#include "Arduino.h"
+#include "Logger.h"
+#include "config.h"
 
-TimeManager::TimeInfo TimeManager::getCurrentTime(){
+void TimeManager::init() { configTzTime(timezone, "pool.ntp.org"); }
+
+TimeManager::TimeInfo TimeManager::getCurrentTime() {
     time_t now;
     struct tm timeinfo;
 
@@ -24,24 +24,23 @@ TimeManager::TimeInfo TimeManager::getCurrentTime(){
     return result;
 }
 
-bool TimeManager::compareTime(const TimeInfo& time1, const TimeInfo& time2){
-    return(time1.hour == time2.hour && time1.minute == time2.minute);
+bool TimeManager::compareTime(const TimeInfo& time1, const TimeInfo& time2) {
+    return (time1.hour == time2.hour && time1.minute == time2.minute);
 }
 
-bool TimeManager::isTimeToTriggerAlarm(uint8_t alarmDays, int alarmHour, int alarmMinute){
+bool TimeManager::isTimeToTriggerAlarm(uint8_t alarmDays, int alarmHour, int alarmMinute) {
     TimeInfo currentTime = getCurrentTime();
-    Logger::trace("Day: %d Hour: %d Minute: %d aD: %d aH: %d aM: %d", currentTime.weekDay, currentTime.hour, currentTime.minute, alarmDays, alarmHour, alarmMinute);
-    if(alarmDays & 0b10000000){
-        return(currentTime.hour == alarmHour && 
-               currentTime.minute == alarmMinute);
+    Logger::trace("Day: %d Hour: %d Minute: %d aD: %d aH: %d aM: %d", currentTime.weekDay,
+                  currentTime.hour, currentTime.minute, alarmDays, alarmHour, alarmMinute);
+    if (alarmDays & 0b10000000) {
+        return (currentTime.hour == alarmHour && currentTime.minute == alarmMinute);
     }
 
     bool isCorrectDay = (alarmDays & (1 << currentTime.weekDay)) != 0;
 
-    if(!isCorrectDay){
+    if (!isCorrectDay) {
         return false;
     }
 
-    return(currentTime.hour == alarmHour && 
-           currentTime.minute == alarmMinute);
+    return (currentTime.hour == alarmHour && currentTime.minute == alarmMinute);
 }
