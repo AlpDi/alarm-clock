@@ -15,12 +15,11 @@
 AlarmWebServer server;
 
 AlarmTrigger& trigger = AlarmTrigger::getInstance();
-Buzzer& buzzer = Buzzer::getInstance();
 
 void setup() {
     TimeManager::init();
 
-    buzzer.begin(26);
+    Buzzer::getInstance().begin(26);
 
     Motor::getInstance().begin(19);
 
@@ -68,9 +67,10 @@ void loop() {
         // Logger::trace("checking alarms");
 
         if (trigger.getActiveAlarms().empty()) {
-            buzzer.stop();
+            Buzzer::getInstance().stop();
             Motor::getInstance().stop();
         }
     }
     Motor::getInstance().update();
+    Buzzer::getInstance().update();
 }

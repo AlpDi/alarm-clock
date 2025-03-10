@@ -16,6 +16,6 @@ class Motor {
     bool motorState = false;
     unsigned long lastToggleTime = 0;
 
-    static const unsigned long ON_DURATION = 2000;
+    static const unsigned long ON_DURATION = 4000;
     static const unsigned long OFF_DURATION = 1000;
 };
